@@ -9,7 +9,7 @@ from typing import Any
 
 from pyspark.sql import SparkSession
 
-from src.config import APP_NAME, SOURCES
+from src.config import APP_NAME_BRONZE, SOURCES
 from src.bronze.bronze_veiculos import extract_to_bronze as extract_veiculos
 from src.bronze.bronze_motoristas import extract_to_bronze as extract_motoristas
 from src.bronze.bronze_geocercas import extract_to_bronze as extract_geocercas
@@ -27,7 +27,7 @@ EXTRACTORS: dict[str, Any] = {
 }
 
 
-def create_spark_session(app_name: str = APP_NAME) -> SparkSession:
+def create_spark_session(app_name: str = APP_NAME_BRONZE) -> SparkSession:
     """Create and configure a SparkSession for bronze extraction.
 
     Parameters
