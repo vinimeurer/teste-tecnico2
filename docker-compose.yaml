@@ -76,7 +76,9 @@ x-airflow-common:
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
     RAW_DATA_PATH: /opt/airflow/data
     BRONZE_OUTPUT_PATH: /opt/airflow/output/bronze
-    APP_NAME: PipelineLogisticoBronze
+    SILVER_OUTPUT_PATH: /opt/airflow/output/silver
+    APP_NAME_BRONZE: PipelineLogisticoBronze
+    APP_NAME_SILVER: PipelineLogisticoSilver
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/src:/opt/airflow/dags/src
@@ -84,7 +86,6 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
     - ${AIRFLOW_PROJ_DIR:-.}/output:/opt/airflow/output
-    - ${AIRFLOW_PROJ_DIR:-.}/data:/opt/airflow/data
     - ${AIRFLOW_PROJ_DIR:-.}/data:/opt/airflow/data
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
