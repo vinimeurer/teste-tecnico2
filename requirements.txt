@@ -4,3 +4,4 @@ pandas==3.0.3
 pyarrow==24.0.0
 pytest==9.0.3
 pytest-cov==7.1.0
+apache-sedona[spark]==1.9.0
