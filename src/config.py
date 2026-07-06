@@ -26,6 +26,15 @@ GOLD_OUTPUT_PATH: str = os.getenv(
     ),
 )
 
+QUALITY_OUTPUT_PATH: str = os.getenv(
+    "QUALITY_OUTPUT_PATH",
+    os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "output",
+        "quality",
+    ),
+)
+
 APP_NAME_BRONZE: str = os.getenv("APP_NAME_BRONZE", "PipelineLogisticoBronze")
 APP_NAME_SILVER: str = os.getenv("APP_NAME_SILVER", "PipelineLogisticoSilver")
 APP_NAME_GOLD: str = os.getenv("APP_NAME_GOLD", "PipelineLogisticoGold")
