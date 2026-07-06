@@ -1,5 +1,5 @@
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import col, lag, when, lit, row_number, collect_list
+from pyspark.sql.functions import col, lag, when, lit, row_number, collect_list, last
 from pyspark.sql.window import Window
 
 from src.config import SOURCES
@@ -76,7 +76,14 @@ def detect_events(df: DataFrame) -> DataFrame:
         row_number().over(window_evento_id),
     )
 
-    df_exploded = df_eventos.select(
+    window_fill = Window.partitionBy("viagem_id", "veiculo_id").orderBy("timestamp")
+    df_filled = df_eventos.withColumn(
+        "geocerca_id", last("geocerca_id", True).over(window_fill),
+    ).withColumn(
+        "nome_geocerca", last("nome_geocerca", True).over(window_fill),
+    )
+
+    df_exploded = df_filled.select(
         col("evento_id"),
         col("viagem_id"),
         col("veiculo_id"),

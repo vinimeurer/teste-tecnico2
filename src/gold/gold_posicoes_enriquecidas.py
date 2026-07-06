@@ -1,12 +1,12 @@
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import col, udf, collect_list, when, lit, array
+from pyspark.sql.functions import col, udf, collect_list, when, lit
 from pyspark.sql.types import BooleanType
 
 from src.config import SOURCES
 
 
 def _ponto_dentro_poligono(lat: float, lon: float, coordinates: list) -> bool:
-    """Check if a point is inside a polygon using the ray-casting algorithm.
+    """Check if a point is inside a polygon using Shapely.
 
     Parameters
     ----------
@@ -23,19 +23,17 @@ def _ponto_dentro_poligono(lat: float, lon: float, coordinates: list) -> bool:
     bool
         True if the point is inside the polygon, False otherwise.
     """
+    from shapely.geometry import Point, Polygon
+
     if not coordinates or not coordinates[0]:
         return False
-    exterior = coordinates[0]
-    n = len(exterior)
-    inside = False
-    j = n - 1
-    for i in range(n):
-        xi, yi = exterior[i][0], exterior[i][1]
-        xj, yj = exterior[j][0], exterior[j][1]
-        if ((yi > lat) != (yj > lat)) and (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi):
-            inside = not inside
-        j = i
-    return inside
+    try:
+        exterior = coordinates[0]
+        interiors = coordinates[1:] if len(coordinates) > 1 else []
+        polygon = Polygon(exterior, interiors)
+        return polygon.covers(Point(lon, lat))
+    except Exception:
+        return False
 
 
 def _criar_udf_ponto_dentro_poligono():

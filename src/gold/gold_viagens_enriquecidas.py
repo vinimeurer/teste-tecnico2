@@ -184,8 +184,15 @@ def enrich_viagens(
         ).otherwise(lit(False)),
     )
 
-    df = df.withColumn("ano", year("data_inicio"))
-    df = df.withColumn("mes", month("data_inicio"))
+    df = df.withColumn(
+        "velocidade_media_kmh",
+        when(col("velocidade_media_kmh") > 276, lit(None))
+        .when(col("velocidade_media_kmh") <= 0, lit(None))
+        .otherwise(col("velocidade_media_kmh")),
+    )
+
+    df = df.withColumn("ano", year(coalesce("data_inicio", "data_fim_prevista")))
+    df = df.withColumn("mes", month(coalesce("data_inicio", "data_fim_prevista")))
 
     cols_to_drop = ["distancia_km_num"]
     existing = set(df.columns)
