@@ -1,50 +1,8 @@
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import col, udf, collect_list, when, lit
-from pyspark.sql.types import BooleanType
+from pyspark.sql.functions import col, collect_list, when, lit, to_json
+from pyspark.sql.functions import expr
 
 from src.config import SOURCES
-
-
-def _ponto_dentro_poligono(lat: float, lon: float, coordinates: list) -> bool:
-    """Check if a point is inside a polygon using Shapely.
-
-    Parameters
-    ----------
-    lat : float
-        Latitude of the point.
-    lon : float
-        Longitude of the point.
-    coordinates : list
-        Polygon coordinates in GeoJSON format: list of rings,
-        each ring being a list of [lon, lat] pairs.
-
-    Returns
-    -------
-    bool
-        True if the point is inside the polygon, False otherwise.
-    """
-    from shapely.geometry import Point, Polygon
-
-    if not coordinates or not coordinates[0]:
-        return False
-    try:
-        exterior = coordinates[0]
-        interiors = coordinates[1:] if len(coordinates) > 1 else []
-        polygon = Polygon(exterior, interiors)
-        return polygon.covers(Point(lon, lat))
-    except Exception:
-        return False
-
-
-def _criar_udf_ponto_dentro_poligono():
-    """Create a UDF for point-in-polygon checking.
-
-    Returns
-    -------
-    callable
-        A PySpark UDF wrapped around _ponto_dentro_poligono.
-    """
-    return udf(_ponto_dentro_poligono, BooleanType())
 
 
 def read_silver_posicoes(spark: SparkSession, config: dict | None = None) -> DataFrame:
@@ -90,8 +48,8 @@ def read_silver_geocercas(spark: SparkSession, config: dict | None = None) -> Da
 def enrich_posicoes(df_posicoes: DataFrame, df_geocercas: DataFrame) -> DataFrame:
     """Classify each GPS position as inside a geocerca or on route.
 
-    Performs a cross-join between positions and geocercas, applies a
-    point-in-polygon UDF, and aggregates matching geocercas per position.
+    Uses Apache Sedona spatial SQL (ST_Contains) via CrossJoin + filter
+    to classify each GPS position against all geocerca polygons.
 
     Parameters
     ----------
@@ -109,22 +67,15 @@ def enrich_posicoes(df_posicoes: DataFrame, df_geocercas: DataFrame) -> DataFram
         - geocerca_id: identifier of the matched geocerca (null if em_rota)
         - nome_geocerca: name of the matched geocerca (null if em_rota)
     """
-    ponto_dentro_poligono_udf = _criar_udf_ponto_dentro_poligono()
-
     geocercas_sel = df_geocercas.select(
         col("geocerca_id"),
         col("nome").alias("nome_geocerca"),
-        col("geometry.coordinates").alias("polygon_coords"),
+        expr("ST_GeomFromGeoJSON(to_json(geometry))").alias("polygon"),
     )
 
-    df_cross = df_posicoes.crossJoin(geocercas_sel)
-
-    df_cross = df_cross.withColumn(
-        "dentro",
-        ponto_dentro_poligono_udf(col("latitude"), col("longitude"), col("polygon_coords")),
-    )
-
-    df_dentro = df_cross.filter(col("dentro")).select(
+    df_dentro = df_posicoes.crossJoin(geocercas_sel).filter(
+        expr("ST_Contains(polygon, ST_Point(longitude, latitude))"),
+    ).select(
         "posicao_id",
         col("geocerca_id"),
         col("nome_geocerca"),
