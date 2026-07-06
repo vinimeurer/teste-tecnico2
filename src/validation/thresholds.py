@@ -1,0 +1,222 @@
+ENTITY_CONFIG: dict[str, dict] = {
+    # ── Bronze ─────────────────────────────────────────────────────────
+    "bronze::veiculos": {
+        "expected_columns": [
+            "veiculo_id", "placa", "marca", "modelo", "ano_fabricacao",
+            "tipo", "capacidade_kg", "capacidade_paletes", "km_atual",
+            "status", "data_ultima_revisao",
+        ],
+        "pk": ["veiculo_id"],
+        "min_rows": 100,
+        "null_rate_max": 0.10,
+        "duplicate_rate_max": 0.0,
+    },
+    "bronze::motoristas": {
+        "expected_columns": [
+            "motorista_id", "nome", "cpf", "cnh", "categoria_cnh",
+            "validade_cnh", "telefone", "data_admissao",
+            "base_operacional", "status",
+        ],
+        "pk": ["motorista_id"],
+        "min_rows": 100,
+        "null_rate_max": 0.10,
+        "duplicate_rate_max": 0.0,
+    },
+    "bronze::geocercas": {
+        "expected_columns": ["properties", "geometry"],
+        "pk": ["properties"],
+        "min_rows": 30,
+        "null_rate_max": 0.05,
+        "duplicate_rate_max": 0.0,
+    },
+    "bronze::viagens": {
+        "expected_columns": [
+            "viagem_id", "veiculo_id", "motorista_id",
+            "geocerca_origem_id", "geocerca_destino_id",
+            "data_inicio", "data_fim_prevista", "data_fim_real",
+            "status", "distancia_km", "peso_carga_kg", "nota_fiscal",
+        ],
+        "pk": ["viagem_id"],
+        "min_rows": 1000,
+        "null_rate_max": 0.10,
+        "duplicate_rate_max": 0.0,
+    },
+    "bronze::posicoes": {
+        "expected_columns": [
+            "posicao_id", "viagem_id", "veiculo_id", "latitude",
+            "longitude", "timestamp", "velocidade_kmh", "ignicao",
+            "odometro_metros",
+        ],
+        "pk": ["posicao_id"],
+        "min_rows": 10000,
+        "null_rate_max": 0.05,
+        "duplicate_rate_max": 0.0,
+    },
+    # ── Silver ─────────────────────────────────────────────────────────
+    "silver::veiculos": {
+        "expected_columns": [
+            "veiculo_id", "placa", "marca", "modelo", "ano_fabricacao",
+            "tipo", "capacidade_kg", "capacidade_paletes", "km_atual",
+            "status", "data_ultima_revisao",
+        ],
+        "pk": ["veiculo_id"],
+        "min_rows": 100,
+        "null_rate_max": 0.15,
+        "duplicate_rate_max": 0.0,
+    },
+    "silver::motoristas": {
+        "expected_columns": [
+            "motorista_id", "nome", "cpf", "cnh", "categoria_cnh",
+            "validade_cnh", "telefone", "data_admissao",
+            "base_operacional", "status", "cnh_valida",
+        ],
+        "pk": ["motorista_id"],
+        "min_rows": 100,
+        "null_rate_max": 0.15,
+        "duplicate_rate_max": 0.0,
+    },
+    "silver::geocercas": {
+        "expected_columns": [
+            "geocerca_id", "nome", "tipo", "uf", "raio_km", "ativo",
+            "geometry",
+        ],
+        "pk": ["geocerca_id"],
+        "min_rows": 30,
+        "null_rate_max": 0.05,
+        "duplicate_rate_max": 0.0,
+    },
+    "silver::viagens": {
+        "expected_columns": [
+            "viagem_id", "veiculo_id", "motorista_id",
+            "geocerca_origem_id", "geocerca_destino_id",
+            "data_inicio", "data_fim_prevista", "data_fim_real",
+            "status", "distancia_km", "peso_carga_kg", "nota_fiscal",
+            "referencia_valida",
+        ],
+        "pk": ["viagem_id"],
+        "min_rows": 1000,
+        "null_rate_max": 0.10,
+        "duplicate_rate_max": 0.0,
+    },
+    "silver::posicoes": {
+        "expected_columns": [
+            "posicao_id", "viagem_id", "veiculo_id", "latitude",
+            "longitude", "timestamp", "velocidade_kmh", "ignicao",
+            "odometro_metros",
+        ],
+        "pk": ["posicao_id"],
+        "min_rows": 10000,
+        "null_rate_max": 0.05,
+        "duplicate_rate_max": 0.0,
+    },
+    # ── Gold ───────────────────────────────────────────────────────────
+    "gold::posicoes_enriquecidas": {
+        "expected_columns": [
+            "posicao_id", "viagem_id", "veiculo_id", "latitude",
+            "longitude", "timestamp", "velocidade_kmh", "ignicao",
+            "odometro_metros", "classificacao", "geocerca_id",
+            "nome_geocerca",
+        ],
+        "pk": ["posicao_id"],
+        "min_rows": 10000,
+        "null_rate_max": 0.05,
+        "duplicate_rate_max": 0.0,
+    },
+    "gold::eventos_geocercas": {
+        "expected_columns": [
+            "evento_id", "viagem_id", "veiculo_id", "geocerca_id",
+            "nome_geocerca", "tipo_evento", "timestamp", "latitude",
+            "longitude",
+        ],
+        "pk": ["evento_id"],
+        "min_rows": 1,
+        "null_rate_max": 0.05,
+        "duplicate_rate_max": 0.0,
+    },
+    "gold::viagens_enriquecidas": {
+        "expected_columns": [
+            "viagem_id", "veiculo_id", "motorista_id",
+            "geocerca_origem_id", "geocerca_destino_id",
+            "data_inicio", "data_fim_prevista", "data_fim_real",
+            "status", "distancia_km", "peso_carga_kg", "nota_fiscal",
+            "referencia_valida", "placa", "marca", "modelo", "tipo",
+            "ano_fabricacao", "nome", "cpf", "categoria_cnh",
+            "base_operacional", "origem_nome", "origem_uf",
+            "origem_tipo", "destino_nome", "destino_uf", "destino_tipo",
+            "tempo_viagem_horas", "velocidade_media_kmh",
+            "atraso_minutos", "possui_atraso", "ano", "mes",
+        ],
+        "pk": ["viagem_id"],
+        "min_rows": 500,
+        "null_rate_max": 0.20,
+        "duplicate_rate_max": 0.0,
+    },
+    "gold::viagens_por_mes_status": {
+        "expected_columns": ["ano", "mes", "status", "quantidade"],
+        "pk": ["ano", "mes", "status"],
+        "min_rows": 1,
+        "null_rate_max": 0.0,
+        "duplicate_rate_max": 0.0,
+    },
+    "gold::tempo_medio_viagem_rota": {
+        "expected_columns": [
+            "geocerca_origem_id", "origem_nome",
+            "geocerca_destino_id", "destino_nome",
+            "tempo_medio_horas", "quantidade_viagens",
+        ],
+        "pk": ["geocerca_origem_id", "geocerca_destino_id"],
+        "min_rows": 1,
+        "null_rate_max": 0.10,
+        "duplicate_rate_max": 0.0,
+    },
+    "gold::velocidade_media_viagem": {
+        "expected_columns": [
+            "viagem_id", "geocerca_origem_id", "origem_nome",
+            "geocerca_destino_id", "destino_nome", "distancia_km",
+            "tempo_viagem_horas", "velocidade_media_kmh",
+        ],
+        "pk": ["viagem_id"],
+        "min_rows": 1,
+        "null_rate_max": 0.10,
+        "duplicate_rate_max": 0.0,
+    },
+    "gold::taxa_atraso_mes": {
+        "expected_columns": [
+            "ano", "mes", "total_viagens", "viagens_atrasadas",
+            "taxa_atraso",
+        ],
+        "pk": ["ano", "mes"],
+        "min_rows": 1,
+        "null_rate_max": 0.0,
+        "duplicate_rate_max": 0.0,
+    },
+    "gold::top_motoristas": {
+        "expected_columns": [
+            "motorista_id", "nome", "viagens_concluidas",
+        ],
+        "pk": ["motorista_id"],
+        "min_rows": 0,
+        "null_rate_max": 0.0,
+        "duplicate_rate_max": 0.0,
+    },
+    "gold::utilizacao_frota_mes": {
+        "expected_columns": [
+            "ano", "mes", "veiculos_com_viagem",
+            "total_veiculos_ativos", "taxa_utilizacao",
+        ],
+        "pk": ["ano", "mes"],
+        "min_rows": 1,
+        "null_rate_max": 0.0,
+        "duplicate_rate_max": 0.0,
+    },
+    "gold::tempo_parado_geocerca_tipo": {
+        "expected_columns": [
+            "geocerca_id", "nome", "tipo",
+            "tempo_medio_parado_minutos", "total_eventos",
+        ],
+        "pk": ["geocerca_id"],
+        "min_rows": 1,
+        "null_rate_max": 0.10,
+        "duplicate_rate_max": 0.0,
+    },
+}

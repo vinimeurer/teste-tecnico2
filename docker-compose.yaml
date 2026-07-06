@@ -78,6 +78,7 @@ x-airflow-common:
     BRONZE_OUTPUT_PATH: /opt/airflow/output/bronze
     SILVER_OUTPUT_PATH: /opt/airflow/output/silver
     GOLD_OUTPUT_PATH: /opt/airflow/output/gold
+    QUALITY_OUTPUT_PATH: /opt/airflow/output/quality
     APP_NAME_BRONZE: PipelineLogisticoBronze
     APP_NAME_SILVER: PipelineLogisticoSilver
     APP_NAME_GOLD: PipelineLogisticoGold

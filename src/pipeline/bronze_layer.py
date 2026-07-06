@@ -9,12 +9,13 @@ from typing import Any
 
 from pyspark.sql import SparkSession
 
-from src.config import APP_NAME_BRONZE, SOURCES
+from src.config import APP_NAME_BRONZE, QUALITY_OUTPUT_PATH, SOURCES
 from src.bronze.bronze_veiculos import extract_to_bronze as extract_veiculos
 from src.bronze.bronze_motoristas import extract_to_bronze as extract_motoristas
 from src.bronze.bronze_geocercas import extract_to_bronze as extract_geocercas
 from src.bronze.bronze_viagens import extract_to_bronze as extract_viagens
 from src.bronze.bronze_posicoes import extract_to_bronze as extract_posicoes
+from src.validation.quality_checks import run_all
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +83,8 @@ def run_bronze_extraction(
                 "Extração concluída: %s (%s) -> %s", name, raw_path, output_path
             )
             results[name] = output_path
+            df = spark.read.parquet(output_path)
+            run_all(df, name, "bronze", QUALITY_OUTPUT_PATH)
         except Exception:
             logger.exception("Falha na extração da fonte: %s", name)
             raise
