@@ -1,5 +1,6 @@
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, lag
+from pyspark.sql.window import Window
 
 from src.config import SOURCES
 
@@ -42,9 +43,17 @@ def clean(df: DataFrame) -> DataFrame:
 
     df = df.filter(col("velocidade_kmh") >= 0)
 
-    df = df.filter(col("velocidade_kmh") < 276)
+    df = df.filter(col("velocidade_kmh") < 120)
 
     df = df.filter(col("timestamp").isNotNull())
+
+    df = df.filter(~((col("velocidade_kmh") > 0) & (col("ignicao") == False)))
+
+    window_odom = Window.partitionBy("viagem_id").orderBy("timestamp")
+    df = df.withColumn("_odom_anterior", lag("odometro_metros").over(window_odom))
+    df = df.filter(
+        col("_odom_anterior").isNull() | (col("odometro_metros") >= col("_odom_anterior")),
+    ).drop("_odom_anterior")
 
     return df
 

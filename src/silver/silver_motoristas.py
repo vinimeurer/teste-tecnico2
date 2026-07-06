@@ -1,6 +1,7 @@
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import col, trim, when, lit
+from pyspark.sql.functions import col, trim, when, lit, initcap, row_number, current_date
 from pyspark.sql.types import DateType
+from pyspark.sql.window import Window
 
 from src.config import SOURCES
 
@@ -42,8 +43,26 @@ def clean(df: DataFrame) -> DataFrame:
 
     df = df.withColumn("nome", when(col("nome") == "", lit(None)).otherwise(col("nome")))
 
+    df = df.withColumn("nome", initcap(col("nome")))
+
+    dedup_window = Window.partitionBy("motorista_id").orderBy(
+        when(col("nome").isNull(), 1).otherwise(0),
+    )
+    df = df.withColumn("_rn", row_number().over(dedup_window))
+    df = df.filter(col("_rn") == 1).drop("_rn")
+
+    df = df.withColumn("cnh", when(col("cnh") == "", lit(None)).otherwise(col("cnh")))
+    df = df.withColumn("telefone", when(col("telefone") == "", lit(None)).otherwise(col("telefone")))
+
     df = df.withColumn("validade_cnh", col("validade_cnh").cast(DateType()))
     df = df.withColumn("data_admissao", col("data_admissao").cast(DateType()))
+
+    df = df.withColumn(
+        "cnh_valida",
+        when(col("validade_cnh").isNull(), lit(None))
+        .when(col("validade_cnh") >= current_date(), lit(True))
+        .otherwise(lit(False)),
+    )
 
     return df
 

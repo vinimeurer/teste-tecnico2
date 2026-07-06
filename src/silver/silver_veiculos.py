@@ -57,6 +57,16 @@ def clean(df: DataFrame) -> DataFrame:
         when(col("status").isin(status_validos), col("status")).otherwise(lit(None)),
     )
 
+    df = df.withColumn(
+        "km_atual",
+        when(col("km_atual") < 0, lit(None)).otherwise(col("km_atual")),
+    )
+
+    df = df.withColumn(
+        "ano_fabricacao",
+        when(col("ano_fabricacao") < 2000, lit(None)).otherwise(col("ano_fabricacao")),
+    )
+
     return df
 
 

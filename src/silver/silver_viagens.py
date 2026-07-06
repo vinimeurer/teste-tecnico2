@@ -1,6 +1,6 @@
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col, trim, when, lit
-from pyspark.sql.types import TimestampType
+from pyspark.sql.types import DoubleType, TimestampType
 
 from src.config import SOURCES
 
@@ -82,6 +82,26 @@ def clean(df: DataFrame, veic_validos: set, mot_validos: set) -> DataFrame:
     df = df.withColumn(
         "status",
         when(col("status").isin(status_validos), col("status")).otherwise(lit(None)),
+    )
+
+    df = df.withColumn(
+        "distancia_km",
+        when(col("distancia_km").cast(DoubleType()) < 0, lit(None))
+        .otherwise(col("distancia_km").cast(DoubleType())),
+    )
+
+    df = df.withColumn(
+        "peso_carga_kg",
+        when(col("peso_carga_kg").cast(DoubleType()) <= 0, lit(None))
+        .otherwise(col("peso_carga_kg").cast(DoubleType())),
+    )
+
+    df = df.withColumn(
+        "status",
+        when(
+            col("data_inicio").isNull() & col("status").isin(["concluida", "atrasada"]),
+            lit("inconsistente"),
+        ).otherwise(col("status")),
     )
 
     return df
